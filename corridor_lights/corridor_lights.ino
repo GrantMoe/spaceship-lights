@@ -20,14 +20,15 @@ struct alert_state {
 
 alert_state red_alert = {CRGB(255, 0, 0), 1000, 0, 127};
 alert_state orange_alert = {CRGB(255, 24, 0), 2000, 8, 127};
-alert_state yellow_alert = {CRGB(255, 128, 0), 3000, 16, 127};
+alert_state yellow_alert = {CRGB(255, 90, 0), 3000, 16, 127};
 alert_state no_alert = {CRGB(255,255,255), 5000, 3, 4 };
+alert_state test_alert = {CRGB(255, 20, 150), 5000, 8, 8};
 
 alert_state current_state;
 
 void setup() {
   FastLED.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, COLOR_ORDER>(leds, NUM_LEDS);
-  current_state = orange_alert;
+  current_state = test_alert;
 }
 
 void loop() {
@@ -36,7 +37,9 @@ void loop() {
     wave_index = 0;
   }
 
-  fill_solid(leds, NUM_LEDS, blend(CRGB::Black, current_state.color, map( cubicwave8(wave_index), 0, 255, current_state.min_value, current_state.max_value ) ) );
+  fill_solid(leds, NUM_LEDS, blend(CRGB::Black, 
+                                  current_state.color, 
+                                  map( cubicwave8(wave_index), 0, 255, current_state.min_value, current_state.max_value ) ) );
 
   FastLED.show();
   delay(current_state.period/255);
