@@ -29,26 +29,27 @@ struct light_state {
 String input_mode;
 String current_mode;
 String modes[6] = {"no_alert", "yellow_alert", "orange_alert", "red_alert", "test_alert", "broken_state"};
-int mode_index = 0;
+int mode_index = 6;  // START OUT OF RANGE BECAUSE I'M LAZY
 
 light_state current_state;
 
+// color, min_value, max_value, period_duration, throb
 light_state red_alert = {CRGB(255, 0, 0), 0, 127, 1000, false};
 light_state orange_alert = {CRGB(255, 48, 0), 8, 127, 2000, true};
 light_state yellow_alert = {CRGB(255, 128, 0), 16, 127, 3000, true};
-light_state no_alert = {CRGB(255,255,255), 3, 4, 5000, true};
-light_state broken_state = {CRGB(255,255,255), 0, 4, 5000, true};
+light_state no_alert = {CRGB(255,255,255), 127, 255, 5000, true};
+light_state broken_state = {CRGB(255,255,255), 0, 255, 5000, true};
 
 light_state test_alert = {CRGB(64, 128, 0), 0, 127, 1000, false};
 
 
 void setup() {
-  FastLED.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+  FastLED.addLeds<LED_TYPE, DATA_PIN, CLOCK_PIN, COLOR_ORDER, DATA_RATE_MHZ(4)>(leds, NUM_LEDS);
 
-//  input_mode = "red_alert";
-  current_state = test_alert;
+  input_mode = "no_alert";
+  current_state = no_alert;
 
-  input_mode = "test_alert";
+//  input_mode = "test_alert";
 //  Serial.begin(9600);
 
   pinMode(5, INPUT_PULLUP);
