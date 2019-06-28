@@ -29,16 +29,16 @@ struct light_state {
 String input_mode;
 String current_mode;
 String modes[6] = {"no_alert", "yellow_alert", "orange_alert", "red_alert", "test_alert", "broken_state"};
-int mode_index = 6;  // START OUT OF RANGE BECAUSE I'M LAZY
-
+int mode_index = 6;  // START OUT OF RANGE TO RESET TO 0 (LAZY)
 light_state current_state;
 
 // color, min_value, max_value, period_duration, throb
 light_state red_alert = {CRGB(255, 0, 0), 0, 127, 1000, false};
 light_state orange_alert = {CRGB(255, 48, 0), 8, 127, 2000, true};
 light_state yellow_alert = {CRGB(255, 128, 0), 16, 127, 3000, true};
-light_state no_alert = {CRGB(255,255,255), 127, 255, 5000, true};
-light_state broken_state = {CRGB(255,255,255), 0, 255, 5000, true};
+light_state no_alert = {CRGB(255, 255, 255), 127, 255, 5000, true};
+light_state broken_state = {CRGB(255, 255, 255), 0, 255, 5000, true};
+light_state flicker_state = {CRGB(255, 255, 255), 0, 255, 0, false};
 
 light_state test_alert = {CRGB(64, 128, 0), 0, 127, 1000, false};
 
@@ -58,6 +58,9 @@ void setup() {
 
 void loop() {
 
+
+//--------------------------------
+// Mode selection/update
   if (digitalRead(5) == LOW) {
           delay(500);
 
@@ -90,31 +93,36 @@ void loop() {
       current_state = no_alert;
     }
   }
+//---------------------------------------
 
-  if (current_mode == "broken_state") {
-    for (int i = 0; i < NUM_LEDS; i++) {
-      if (random(100000) <= 1) {
-        flash_number[i] += random(5);
-        flash_duration[i] = random(50, 1000);
-      } 
-    }
-  }
-
-  current_time = millis();
+// determine which broken lights are blinking and for how long
+//  if (current_mode == "broken_state") {
+//    for (int i = 0; i < NUM_LEDS; i++) {
+//      if (random(100000) <= 1) {
+//        flash_number[i] += random(5);
+//        flash_duration[i] = random(50, 1000);
+//      } 
+//    }
+//  }
 
   // set/reset cycle time
+  current_time = millis();
   if ((current_time - cycle_start) > current_state.period_duration) {
     cycle_start = current_time; 
   }
 
-  // calculate brightness based percentage of cycle, scaled to 8 bits
-  wave_index = ((float(current_time) - float(cycle_start)) / float(current_state.period_duration)) * 256;
-
 //  Serial.println(wave_index);
 
+  // 
   if (current_mode == "broken_state") {
     for (int i = 0; i < NUM_LEDS; i++) {
 
+      // add random duration, randomly distributed flashes
+      if (random(100000) <= 1) {
+        flash_number[i] += random(5);
+        flash_duration[i] = random(50, 1000);
+      } 
+      // flash as necessary if light is flashing
       if (flash_number[i] > 0) {
         if ( (float(current_time) - float(last_flash[i])) > float(flash_duration[i]) ) {
           last_flash[i] = current_time;
@@ -128,12 +136,18 @@ void loop() {
       }     
     }
   } else {
-  // set LED colors
+
+    // calculate brightness based percentage of cycle, scaled to 8 bits
+    wave_index = ((float(current_time) - float(cycle_start)) / float(current_state.period_duration)) * 256;
+    
+    // set all LED colors
     if (current_state.throb) {
+      // use trig function to determine throb brightness
       fill_solid(leds, NUM_LEDS, blend(CRGB::Black, 
                                     current_state.color, 
                                     map(cubicwave8(wave_index), 0, 255, current_state.min_value, current_state.max_value )));
     } else {
+      // calculate hard half-on/half-off cycle phase
       if (wave_index >= 127) {  // for half-on, half-off without throb
         fill_solid(leds, NUM_LEDS, blend(CRGB::Black, current_state.color, current_state.max_value));  
       } else {
@@ -144,5 +158,5 @@ void loop() {
 
   // show LEDs
   FastLED.show();
-//  delay(10); // needed?
+//  delay(10); // if needed
 }
